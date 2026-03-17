@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - TrackWise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container" style="width:95%; max-width:1100px;">
+    <h2>Admin Panel</h2>
+    <button onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+
+    <h3>All Users</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Admin</th>
+                <th>Total Expenses</th>
+                <th>Total Amount</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="userTable"></tbody>
+    </table>
+
+    <h3>User Expense Details</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Category</th>
+                <th>Payment</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody id="expenseTable"></tbody>
+    </table>
+</div>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user) window.location.href = "login.html";
+
+if (!user.is_admin) {
+    alert("Access denied");
+    window.location.href = "dashboard.html";
+}
+
+async function applySavedTheme() {
+    try {
+        const res = await fetch(`http://localhost:5000/settings/${user.id}`);
+        const data = await res.json();
+        if (data.theme === "light") document.body.classList.add("light-theme");
+        else document.body.classList.remove("light-theme");
+    } catch (e) {}
+}
+
+async function loadUsers() {
+    const res = await fetch("http://localhost:5000/admin/users");
+    const data = await res.json();
+
+    const table = document.getElementById("userTable");
+    table.innerHTML = "";
+
+    data.forEach(u => {
+        table.innerHTML += `
+            <tr>
+                <td>${u.id}</td>
+                <td>${u.name}</td>
+                <td>${u.email}</td>
+                <td>${u.is_admin ? "Yes" : "No"}</td>
+                <td>${u.total_expenses}</td>
+                <td>₹${u.total_amount}</td>
+                <td>
+                    <button onclick="viewExpenses(${u.id})">View Expenses</button>
+                    <button onclick="deleteUser(${u.id})">Delete</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+async function viewExpenses(userId) {
+    const res = await fetch(`http://localhost:5000/admin/expenses/${userId}`);
+    const data = await res.json();
+
+    const table = document.getElementById("expenseTable");
+    table.innerHTML = "";
+
+    data.forEach(exp => {
+        table.innerHTML += `
+            <tr>
+                <td>${exp.id}</td>
+                <td>${exp.expense_date?.split("T")[0] || exp.expense_date}</td>
+                <td>₹${exp.amount}</td>
+                <td>${exp.category}</td>
+                <td>${exp.payment_method}</td>
+                <td>${exp.description || ""}</td>
+            </tr>
+        `;
+    });
+}
+
+async function deleteUser(id) {
+    if (!confirm("Delete this user?")) return;
+
+    const res = await fetch(`http://localhost:5000/admin/user/${id}`, {
+        method: "DELETE"
+    });
+
+    const data = await res.json();
+    alert(data.message || data.error);
+    loadUsers();
+    document.getElementById("expenseTable").innerHTML = "";
+}
+
+(async function () {
+    await applySavedTheme();
+    loadUsers();
+})();
+</script>
+</body>
+</html>

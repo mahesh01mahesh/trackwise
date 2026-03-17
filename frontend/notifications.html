@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - TrackWise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container" style="width:90%; max-width:900px;">
+    <h2>Notifications</h2>
+    <button onclick="clearAllNotifications()">Clear All</button>
+    <button onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Message</th>
+                <th>Created At</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="notificationTable"></tbody>
+    </table>
+</div>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user) window.location.href = "login.html";
+
+async function applySavedTheme() {
+    try {
+        const res = await fetch(`http://localhost:5000/settings/${user.id}`);
+        const data = await res.json();
+        if (data.theme === "light") document.body.classList.add("light-theme");
+        else document.body.classList.remove("light-theme");
+    } catch (e) {}
+}
+
+async function loadNotifications() {
+    const res = await fetch(`http://localhost:5000/notifications/${user.id}`);
+    const data = await res.json();
+
+    const table = document.getElementById("notificationTable");
+    table.innerHTML = "";
+
+    data.forEach(n => {
+        table.innerHTML += `
+            <tr>
+                <td>${n.id}</td>
+                <td>${n.title}</td>
+                <td>${n.message}</td>
+                <td>${new Date(n.created_at).toLocaleString()}</td>
+                <td><button onclick="deleteNotification(${n.id})">Delete</button></td>
+            </tr>
+        `;
+    });
+}
+
+async function deleteNotification(id) {
+    const res = await fetch(`http://localhost:5000/notifications/delete/${id}`, {
+        method: "DELETE"
+    });
+    const data = await res.json();
+    alert(data.message || data.error);
+    loadNotifications();
+}
+
+async function clearAllNotifications() {
+    const res = await fetch(`http://localhost:5000/notifications/clear-all/${user.id}`, {
+        method: "DELETE"
+    });
+    const data = await res.json();
+    alert(data.message || data.error);
+    loadNotifications();
+}
+
+(async function () {
+    await applySavedTheme();
+    loadNotifications();
+})();
+</script>
+</body>
+</html>

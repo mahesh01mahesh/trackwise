@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget - TrackWise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="dashboard-shell">
+    <div class="topbar">
+        <div>
+            <h1>Budget Management</h1>
+            <p>Set and monitor your weekly or monthly budget.</p>
+        </div>
+        <div class="topbar-actions">
+            <button class="small-btn" onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+        </div>
+    </div>
+
+    <section class="panel">
+        <div class="section-head">
+            <h3>Set Budget</h3>
+        </div>
+
+        <div class="filter-grid">
+            <select id="budget_type">
+                <option value="monthly">Monthly</option>
+                <option value="weekly">Weekly</option>
+            </select>
+
+            <input type="number" id="amount" placeholder="Enter budget amount">
+
+            <button onclick="setBudget()">Save Budget</button>
+        </div>
+    </section>
+
+    <div class="grid-2">
+        <section class="panel">
+            <div class="section-head">
+                <h3>Budget List</h3>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Budget Type</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="budgetTable"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="section-head">
+                <h3>Monthly Budget Status</h3>
+            </div>
+
+            <p id="budgetStatus">Loading...</p>
+
+            <div class="progress-wrap">
+                <div id="budgetBar" class="progress-bar"></div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user) window.location.href = "login.html";
+
+async function applySavedTheme() {
+    try {
+        const res = await fetch(`http://localhost:5000/settings/${user.id}`);
+        const data = await res.json();
+
+        if (data.theme === "light") {
+            document.body.classList.add("light-theme");
+        } else {
+            document.body.classList.remove("light-theme");
+        }
+    } catch (e) {}
+}
+
+async function setBudget() {
+    const budget_type = document.getElementById("budget_type").value;
+    const amount = document.getElementById("amount").value;
+
+    if (!amount || Number(amount) <= 0) {
+        alert("Enter valid budget amount");
+        return;
+    }
+
+    const res = await fetch("http://localhost:5000/budget/set", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            user_id: user.id,
+            budget_type,
+            amount
+        })
+    });
+
+    const data = await res.json();
+    alert(data.message || data.error);
+    document.getElementById("amount").value = "";
+    loadBudgets();
+    loadBudgetStatus();
+}
+
+async function loadBudgets() {
+    const res = await fetch(`http://localhost:5000/budget/all/${user.id}`);
+    const data = await res.json();
+
+    const table = document.getElementById("budgetTable");
+    table.innerHTML = "";
+
+    data.forEach(b => {
+        table.innerHTML += `
+            <tr>
+                <td>${b.id}</td>
+                <td>${b.budget_type}</td>
+                <td>₹${b.amount}</td>
+            </tr>
+        `;
+    });
+}
+
+async function loadBudgetStatus() {
+    const res = await fetch(`http://localhost:5000/budget/status/${user.id}`);
+    const data = await res.json();
+
+    let text = `Monthly Budget: ₹${data.monthlyBudget}, Spent: ₹${data.monthlySpent}, Remaining: ₹${data.remaining}`;
+    if (data.exceeded) {
+        text += " | Budget Exceeded";
+    }
+
+    document.getElementById("budgetStatus").innerText = text;
+
+    const percent = data.monthlyBudget > 0
+        ? Math.min((data.monthlySpent / data.monthlyBudget) * 100, 100)
+        : 0;
+
+    const bar = document.getElementById("budgetBar");
+    bar.style.width = percent + "%";
+    bar.innerText = Math.round(percent) + "%";
+
+    if (data.exceeded) {
+        bar.style.background = "linear-gradient(135deg, #ef4444, #dc2626)";
+    } else {
+        bar.style.background = "linear-gradient(135deg, #00ff88, #00c853, #00ffcc)";
+    }
+}
+
+(async function () {
+    await applySavedTheme();
+    loadBudgets();
+    loadBudgetStatus();
+})();
+</script>
+</body>
+</html>

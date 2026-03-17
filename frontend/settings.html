@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - TrackWise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <h2>Settings</h2>
+
+    <label>Theme</label>
+    <select id="theme">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+    </select>
+
+    <label>Language</label>
+    <select id="language">
+        <option value="english">English</option>
+        <option value="telugu">Telugu</option>
+        <option value="hindi">Hindi</option>
+        <option value="tamil">Tamil</option>
+    </select>
+
+    <label>Email Notifications</label>
+    <select id="email_notifications">
+        <option value="1">Enabled</option>
+        <option value="0">Disabled</option>
+    </select>
+
+    <button onclick="saveSettings()">Save Settings</button>
+    <button onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+</div>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user) window.location.href = "login.html";
+
+async function loadSettings() {
+    const res = await fetch(`http://localhost:5000/settings/${user.id}`);
+    const data = await res.json();
+
+    document.getElementById("theme").value = data.theme || "dark";
+    document.getElementById("language").value = data.language || "english";
+    document.getElementById("email_notifications").value = String(data.email_notifications ?? 1);
+
+    applyTheme(document.getElementById("theme").value);
+}
+
+async function saveSettings() {
+    const theme = document.getElementById("theme").value;
+    const language = document.getElementById("language").value;
+    const email_notifications = Number(document.getElementById("email_notifications").value);
+
+    const res = await fetch(`http://localhost:5000/settings/update/${user.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme, language, email_notifications })
+    });
+
+    const data = await res.json();
+    alert(data.message || data.error);
+
+    if (data.message) {
+        localStorage.setItem("dashboardLang", language);
+    }
+
+    applyTheme(theme);
+}
+
+function applyTheme(theme) {
+    if (theme === "light") {
+        document.body.classList.add("light-theme");
+    } else {
+        document.body.classList.remove("light-theme");
+    }
+}
+
+loadSettings();
+</script>
+</body>
+</html>

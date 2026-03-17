@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categories - TrackWise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container" style="width:90%; max-width:800px;">
+    <h2>Category Management</h2>
+
+    <input type="text" id="category_name" placeholder="Enter category name">
+    <button onclick="addCategory()">Add Category</button>
+    <button onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Category Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="categoryTable"></tbody>
+    </table>
+</div>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user) window.location.href = "login.html";
+
+async function applySavedTheme() {
+    try {
+        const res = await fetch(`http://localhost:5000/settings/${user.id}`);
+        const data = await res.json();
+        if (data.theme === "light") document.body.classList.add("light-theme");
+        else document.body.classList.remove("light-theme");
+    } catch (e) {}
+}
+
+async function loadCategories() {
+    const res = await fetch(`http://localhost:5000/categories/all/${user.id}`);
+    const data = await res.json();
+
+    const table = document.getElementById("categoryTable");
+    table.innerHTML = "";
+
+    data.forEach(cat => {
+        table.innerHTML += `
+            <tr>
+                <td>${cat.id}</td>
+                <td>${cat.category_name}</td>
+                <td>
+                    <button onclick="editCategory(${cat.id}, '${cat.category_name}')">Edit</button>
+                    <button onclick="deleteCategory(${cat.id})">Delete</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+async function addCategory() {
+    const category_name = document.getElementById("category_name").value.trim();
+    if (!category_name) {
+        alert("Enter category name");
+        return;
+    }
+
+    const res = await fetch("http://localhost:5000/categories/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user.id, category_name })
+    });
+
+    const data = await res.json();
+    alert(data.message || data.error);
+    document.getElementById("category_name").value = "";
+    loadCategories();
+}
+
+async function editCategory(id, oldName) {
+    const newName = prompt("Enter new category name:", oldName);
+    if (!newName) return;
+
+    const res = await fetch(`http://localhost:5000/categories/update/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category_name: newName })
+    });
+
+    const data = await res.json();
+    alert(data.message || data.error);
+    loadCategories();
+}
+
+async function deleteCategory(id) {
+    const res = await fetch(`http://localhost:5000/categories/delete/${id}`, {
+        method: "DELETE"
+    });
+
+    const data = await res.json();
+    alert(data.message || data.error);
+    loadCategories();
+}
+
+(async function () {
+    await applySavedTheme();
+    loadCategories();
+})();
+</script>
+</body>
+</html>

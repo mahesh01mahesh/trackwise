@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - TrackWise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="dashboard-shell">
+    <div class="topbar">
+        <div>
+            <h1>Reports</h1>
+            <p>View, filter, download and print your expense reports.</p>
+        </div>
+        <div class="topbar-actions">
+            <button class="small-btn" onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+        </div>
+    </div>
+
+    <section class="panel">
+        <div class="section-head">
+            <h3>Filter Reports</h3>
+        </div>
+
+        <div class="filter-grid">
+            <input type="date" id="from_date">
+            <input type="date" id="to_date">
+            <button onclick="loadReports()">Apply Date Filter</button>
+            <button onclick="resetReportFilter()">Reset Filter</button>
+        </div>
+
+        <div class="mini-actions">
+            <button class="small-btn" onclick="downloadPDF()">Download PDF</button>
+            <button class="small-btn" onclick="downloadExcel()">Download Excel</button>
+            <button class="small-btn" onclick="downloadCSV()">Download CSV</button>
+            <button class="small-btn" onclick="printReport()">Print Report</button>
+            <button class="small-btn" onclick="sendReport()">Send Report to Email</button>
+        </div>
+    </section>
+
+    <section class="panel" id="printArea">
+        <div class="section-head">
+            <h3>All Expenses</h3>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Category</th>
+                        <th>Payment</th>
+                        <th>Description</th>
+                        <th>Receipt</th>
+                    </tr>
+                </thead>
+                <tbody id="reportTable"></tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user) window.location.href = "login.html";
+
+async function applySavedTheme() {
+    try {
+        const res = await fetch(`http://localhost:5000/settings/${user.id}`);
+        const data = await res.json();
+
+        if (data.theme === "light") {
+            document.body.classList.add("light-theme");
+        } else {
+            document.body.classList.remove("light-theme");
+        }
+    } catch (e) {}
+}
+
+function getFilterQuery() {
+    const from_date = document.getElementById("from_date").value;
+    const to_date = document.getElementById("to_date").value;
+    return new URLSearchParams({ from_date, to_date }).toString();
+}
+
+async function loadReports() {
+    const query = getFilterQuery();
+    const res = await fetch(`http://localhost:5000/expenses/search/${user.id}?${query}`);
+    const data = await res.json();
+
+    const table = document.getElementById("reportTable");
+    table.innerHTML = "";
+
+    data.forEach(exp => {
+        const receiptLink = exp.receipt
+            ? `<a href="http://localhost:5000/uploads/${exp.receipt}" target="_blank">View</a>`
+            : "No Receipt";
+
+        table.innerHTML += `
+            <tr>
+                <td>${exp.id}</td>
+                <td>${exp.expense_date?.split("T")[0] || exp.expense_date}</td>
+                <td>₹${exp.amount}</td>
+                <td>${exp.category}</td>
+                <td>${exp.payment_method}</td>
+                <td>${exp.description || ""}</td>
+                <td>${receiptLink}</td>
+            </tr>
+        `;
+    });
+}
+
+function resetReportFilter() {
+    document.getElementById("from_date").value = "";
+    document.getElementById("to_date").value = "";
+    loadReports();
+}
+
+function downloadPDF() {
+    window.open(`http://localhost:5000/reports/pdf/${user.id}?${getFilterQuery()}`, "_blank");
+}
+
+function downloadExcel() {
+    window.open(`http://localhost:5000/reports/excel/${user.id}?${getFilterQuery()}`, "_blank");
+}
+
+function downloadCSV() {
+    window.open(`http://localhost:5000/reports/csv/${user.id}?${getFilterQuery()}`, "_blank");
+}
+
+function printReport() {
+    const printContents = document.getElementById("printArea").innerHTML;
+    const originalContents = document.body.innerHTML;
+
+    document.body.innerHTML = printContents;
+    window.print();
+    document.body.innerHTML = originalContents;
+    location.reload();
+}
+
+async function sendReport() {
+    const email = prompt("Enter email address:");
+    if (!email) return;
+
+    const res = await fetch("http://localhost:5000/reports/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            user_id: user.id,
+            email
+        })
+    });
+
+    const data = await res.json();
+    alert(data.message || data.error);
+}
+
+(async function () {
+    await applySavedTheme();
+    loadReports();
+})();
+</script>
+</body>
+</html>

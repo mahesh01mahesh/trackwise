@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - TrackWise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <h2>Profile</h2>
+
+    <input type="text" id="name" placeholder="Name">
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="New Password (optional)">
+
+    <button onclick="updateProfile()">Update Profile</button>
+    <button onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+</div>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user) window.location.href = "login.html";
+
+async function applySavedTheme() {
+    try {
+        const res = await fetch(`http://localhost:5000/settings/${user.id}`);
+        const data = await res.json();
+        if (data.theme === "light") document.body.classList.add("light-theme");
+        else document.body.classList.remove("light-theme");
+    } catch (e) {}
+}
+
+async function loadProfile() {
+    const res = await fetch(`http://localhost:5000/profile/${user.id}`);
+    const data = await res.json();
+
+    document.getElementById("name").value = data.name;
+    document.getElementById("email").value = data.email;
+}
+
+async function updateProfile() {
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const res = await fetch(`http://localhost:5000/profile/update/${user.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password })
+    });
+
+    const data = await res.json();
+    alert(data.message || data.error);
+
+    if (data.message) {
+        localStorage.setItem("user", JSON.stringify({ ...user, name, email }));
+    }
+}
+
+(async function () {
+    await applySavedTheme();
+    loadProfile();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackWise Register</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <h2>Register</h2>
+    <input type="text" id="name" placeholder="Name">
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="registerUser()">Register</button>
+    <p>Already have an account? <a href="./login.html">Login</a></p>
+</div>
+
+<script>
+async function registerUser() {
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if (!name || !email || !password) {
+        alert("Please fill all fields");
+        return;
+    }
+
+    const res = await fetch("http://localhost:5000/auth/register", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name, email, password })
+    });
+
+    const data = await res.json();
+    alert(data.message || data.error);
+
+    if (data.message === "User registered successfully") {
+        window.location.href = "./login.html";
+    }
+}
+</script>
+</body>
+</html>

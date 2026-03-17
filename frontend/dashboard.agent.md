@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackWise Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="dashboard-shell">
+    <div class="topbar">
+        <div class="brand-block">
+            <div class="brand-logo">
+                <img src="https://tse2.mm.bing.net/th/id/OIP.dYoe8VnhPklYfQXPCaN8hwHaHo?pid=Api&P=0&h=180" alt="TrackWise Logo">
+            </div>
+            <div>
+                <h1 id="mainTitle">TrackWise Dashboard</h1>
+                <p id="welcomeText">Welcome</p>
+                <p id="currentDate"></p>
+            </div>
+        </div>
+
+        <div class="topbar-actions">
+            <button class="small-btn" onclick="toggleLanguage()">Language</button>
+            <button class="small-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="summary-line">
+        <p id="summary">Loading summary...</p>
+    </div>
+
+    <section class="cards">
+        <div class="card stat-card">
+            <h4>Today</h4>
+            <p id="cardToday">₹0</p>
+        </div>
+        <div class="card stat-card">
+            <h4>This Week</h4>
+            <p id="cardWeek">₹0</p>
+        </div>
+        <div class="card stat-card">
+            <h4>This Month</h4>
+            <p id="cardMonth">₹0</p>
+        </div>
+        <div class="card stat-card">
+            <h4>This Year</h4>
+            <p id="cardYear">₹0</p>
+        </div>
+    </section>
+
+    <section class="cards">
+        <div class="card stat-card">
+            <h4>Total Expense</h4>
+            <p id="cardTotal">₹0</p>
+        </div>
+        <div class="card stat-card">
+            <h4>Highest Expense</h4>
+            <p id="cardHigh">₹0</p>
+        </div>
+        <div class="card stat-card">
+            <h4>Lowest Expense</h4>
+            <p id="cardLow">₹0</p>
+        </div>
+        <div class="card stat-card">
+            <h4>Monthly Budget</h4>
+            <p id="cardBudget">₹0</p>
+        </div>
+    </section>
+
+    <section class="cards">
+        <div class="card stat-card">
+            <h4>Top Category</h4>
+            <p id="topCat">None</p>
+        </div>
+        <div class="card stat-card">
+            <h4>Lowest Category</h4>
+            <p id="lowCat">None</p>
+        </div>
+        <div class="card stat-card">
+            <h4>Total Records</h4>
+            <p id="expenseCount">0</p>
+        </div>
+        <div class="card stat-card">
+            <h4>Budget Status</h4>
+            <p id="budgetStatusCard">Safe</p>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="section-head">
+            <h3>Quick Actions</h3>
+        </div>
+
+        <div class="action-grid">
+            <button class="action-card" onclick="window.location.href='add-expense.html'">
+                <span class="action-icon">+</span>
+                <span>Add Expense</span>
+            </button>
+
+            <button class="action-card" onclick="window.location.href='reports.html'">
+                <span class="action-icon">📊</span>
+                <span>Reports</span>
+            </button>
+
+            <button class="action-card" onclick="window.location.href='budget.html'">
+                <span class="action-icon">₹</span>
+                <span>Budget</span>
+            </button>
+
+            <button class="action-card" onclick="window.location.href='categories.html'">
+                <span class="action-icon">◫</span>
+                <span>Categories</span>
+            </button>
+
+            <button class="action-card secondary" onclick="window.location.href='profile.html'">
+                <span class="action-icon">👤</span>
+                <span>Profile</span>
+            </button>
+
+            <button class="action-card secondary" onclick="window.location.href='notifications.html'">
+                <span class="action-icon">🔔</span>
+                <span>Notifications</span>
+            </button>
+
+            <button class="action-card secondary" onclick="window.location.href='settings.html'">
+                <span class="action-icon">⚙</span>
+                <span>Settings</span>
+            </button>
+
+            <button id="adminBtn" class="action-card secondary" style="display:none;" onclick="window.location.href='admin.html'">
+                <span class="action-icon">🛡</span>
+                <span>Admin</span>
+            </button>
+        </div>
+
+        <div class="mini-actions">
+            <button class="small-btn" onclick="sendMonthlyNow()">Send Monthly Report</button>
+            <button class="small-btn" onclick="addDemoData()">Add Demo Data</button>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="section-head">
+            <h3>Search / Filter</h3>
+        </div>
+
+        <div class="filter-grid">
+            <input type="text" id="filter_category" placeholder="Category">
+            <input type="text" id="filter_payment" placeholder="Payment Method">
+            <input type="date" id="from_date">
+            <input type="date" id="to_date">
+            <input type="number" id="min_amount" placeholder="Min Amount">
+            <input type="number" id="max_amount" placeholder="Max Amount">
+            <select id="sort_by">
+                <option value="">Default Sort</option>
+                <option value="expense_date">Sort by Date</option>
+                <option value="amount">Sort by Amount</option>
+            </select>
+            <select id="sort_order">
+                <option value="DESC">Descending</option>
+                <option value="ASC">Ascending</option>
+            </select>
+        </div>
+
+        <div class="mini-actions">
+            <button class="small-btn" onclick="searchExpenses()">Search</button>
+            <button class="small-btn" onclick="resetFilters()">Reset Filters</button>
+            <button class="small-btn" onclick="resetSort()">Reset Sort</button>
+        </div>
+    </section>
+
+    <section class="grid-2">
+        <div class="panel">
+            <div class="section-head">
+                <h3>Recent Transactions</h3>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Category</th>
+                            <th>Payment</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="section-head">
+                <h3>Expense Table</h3>
+            </div>
+            <p id="emptyMessage" style="display:none;">No expenses added yet.</p>
+            <div class="table-wrap" id="expenseTableWrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Category</th>
+                            <th>Payment</th>
+                            <th>Description</th>
+                            <th>Receipt</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenseTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="grid-2">
+        <div class="panel">
+            <div class="section-head">
+                <h3>Category Wise Chart</h3>
+            </div>
+            <canvas id="categoryChart" height="120"></canvas>
+        </div>
+
+        <div class="panel">
+            <div class="section-head">
+                <h3>Monthly Expense Trend</h3>
+            </div>
+            <canvas id="monthlyChart" height="120"></canvas>
+        </div>
+    </section>
+
+    <footer class="dashboard-footer">
+        © 2026 TrackWise • Designed by Mahesh
+    </footer>
+</div>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user) window.location.href = "login.html";
+
+if (user.is_admin) {
+    document.getElementById("adminBtn").style.display = "flex";
+}
+
+let categoryChartInstance;
+let monthlyChartInstance;
+let currentLanguage = localStorage.getItem("dashboardLang") || "english";
+
+async function applySavedTheme() {
+    try {
+        const res = await fetch(`http://localhost:5000/settings/${user.id}`);
+        const data = await res.json();
+
+        if (data.theme === "light") {
+            document.body.classList.add("light-theme");
+        } else {
+            document.body.classList.remove("light-theme");
+        }
+
+        if (data.language) {
+            currentLanguage = data.language;
+            localStorage.setItem("dashboardLang", currentLanguage);
+        }
+    } catch (e) {}
+}
+
+function showCurrentDate() {
+    const now = new Date();
+    const options = {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+    };
+    document.getElementById("currentDate").innerText = now.toLocaleDateString("en-IN", options);
+}
+
+function toggleLanguage() {
+    const languages = ["english", "telugu", "hindi", "tamil"];
+    let currentIndex = languages.indexOf(currentLanguage);
+    currentIndex = (currentIndex + 1) % languages.length;
+    currentLanguage = languages[currentIndex];
+    localStorage.setItem("dashboardLang", currentLanguage);
+    applyLanguage();
+}
+
+function applyLanguage() {
+    const texts = {
+        english: {
+            title: "TrackWise Dashboard",
+            welcome: `Welcome, ${user.name}`
+        },
+        telugu: {
+            title: "ట్రాక్‌వైస్ డాష్‌బోర్డ్",
+            welcome: `స్వాగతం, ${user.name}`
+        },
+        hindi: {
+            title: "ट्रैकवाइज़ डैशबोर्ड",
+            welcome: `स्वागत है, ${user.name}`
+        },
+        tamil: {
+            title: "டிராக்வைஸ் டாஷ்போர்டு",
+            welcome: `வரவேற்கிறோம், ${user.name}`
+        }
+    };
+
+    const lang = texts[currentLanguage] || texts.english;
+    document.getElementById("mainTitle").innerText = lang.title;
+    document.getElementById("welcomeText").innerText = lang.welcome;
+}
+
+function getSortQuery() {
+    const sort_by = document.getElementById("sort_by").value;
+    const order = document.getElementById("sort_order").value;
+    return new URLSearchParams({ sort_by, order }).toString();
+}
+
+function renderExpenses(data) {
+    const table = document.getElementById("expenseTable");
+    const emptyMessage = document.getElementById("emptyMessage");
+    const tableWrapper = document.getElementById("expenseTableWrapper");
+
+    table.innerHTML = "";
+    document.getElementById("expenseCount").innerText = data.length;
+
+    if (data.length === 0) {
+        emptyMessage.style.display = "block";
+        tableWrapper.style.display = "none";
+        return;
+    }
+
+    emptyMessage.style.display = "none";
+    tableWrapper.style.display = "block";
+
+    data.forEach(exp => {
+        const receiptLink = exp.receipt
+            ? `<a href="http://localhost:5000/uploads/${exp.receipt}" target="_blank">View</a>`
+            : "No Receipt";
+
+        table.innerHTML += `
+            <tr>
+                <td>${exp.id}</td>
+                <td>${exp.expense_date?.split("T")[0] || exp.expense_date}</td>
+                <td>${exp.amount}</td>
+                <td>${exp.category}</td>
+                <td>${exp.payment_method}</td>
+                <td>${exp.description || ""}</td>
+                <td>${receiptLink}</td>
+                <td>
+                    <button class="table-btn" onclick="editExpense(${exp.id})">Edit</button>
+                    <button class="table-btn danger" onclick="deleteExpense(${exp.id})">Delete</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+async function loadExpenses() {
+    const query = getSortQuery();
+    const res = await fetch(`http://localhost:5000/expenses/all/${user.id}?${query}`);
+    const data = await res.json();
+    renderExpenses(data);
+}
+
+function resetSort() {
+    document.getElementById("sort_by").value = "";
+    document.getElementById("sort_order").value = "DESC";
+    loadExpenses();
+}
+
+async function loadRecentTransactions() {
+    const res = await fetch(`http://localhost:5000/expenses/recent/${user.id}`);
+    const data = await res.json();
+
+    const table = document.getElementById("recentTable");
+    table.innerHTML = "";
+
+    data.forEach(exp => {
+        table.innerHTML += `
+            <tr>
+                <td>${exp.id}</td>
+                <td>${exp.expense_date?.split("T")[0] || exp.expense_date}</td>
+                <td>${exp.amount}</td>
+                <td>${exp.category}</td>
+                <td>${exp.payment_method}</td>
+                <td>${exp.description || ""}</td>
+            </tr>
+        `;
+    });
+}
+
+async function searchExpenses() {
+    const category = document.getElementById("filter_category").value;
+    const payment_method = document.getElementById("filter_payment").value;
+    const from_date = document.getElementById("from_date").value;
+    const to_date = document.getElementById("to_date").value;
+    const min_amount = document.getElementById("min_amount").value;
+    const max_amount = document.getElementById("max_amount").value;
+    const sort_by = document.getElementById("sort_by").value;
+    const order = document.getElementById("sort_order").value;
+
+    const params = new URLSearchParams({
+        category,
+        payment_method,
+        from_date,
+        to_date,
+        min_amount,
+        max_amount,
+        sort_by,
+        order
+    });
+
+    const res = await fetch(`http://localhost:5000/expenses/search/${user.id}?${params.toString()}`);
+    const data = await res.json();
+    renderExpenses(data);
+}
+
+function resetFilters() {
+    document.getElementById("filter_category").value = "";
+    document.getElementById("filter_payment").value = "";
+    document.getElementById("from_date").value = "";
+    document.getElementById("to_date").value = "";
+    document.getElementById("min_amount").value = "";
+    document.getElementById("max_amount").value = "";
+    loadExpenses();
+}
+
+function editExpense(id) {
+    window.location.href = `add-expense.html?id=${id}`;
+}
+
+async function deleteExpense(id) {
+    const ok = confirm("Are you sure you want to delete this expense?");
+    if (!ok) return;
+
+    const res = await fetch(`http://localhost:5000/expenses/delete/${id}`, {
+        method: "DELETE"
+    });
+    const data = await res.json();
+    alert(data.message || data.error);
+    refreshAll();
+}
+
+async function loadSummary() {
+    const res = await fetch(`http://localhost:5000/expenses/summary/${user.id}`);
+    const data = await res.json();
+
+    document.getElementById("summary").innerText =
+        `Total Expense: ₹${data.totalExpense}, Highest: ₹${data.highestExpense}, Lowest: ₹${data.lowestExpense}`;
+
+    document.getElementById("cardTotal").innerText = `₹${data.totalExpense}`;
+    document.getElementById("cardHigh").innerText = `₹${data.highestExpense}`;
+    document.getElementById("cardLow").innerText = `₹${data.lowestExpense}`;
+}
+
+async function loadAdvancedSummary() {
+    const res = await fetch(`http://localhost:5000/expenses/advanced-summary/${user.id}`);
+    const data = await res.json();
+
+    document.getElementById("cardToday").innerText = `₹${data.todayTotal}`;
+    document.getElementById("cardWeek").innerText = `₹${data.weekTotal}`;
+    document.getElementById("cardMonth").innerText = `₹${data.monthTotal}`;
+    document.getElementById("cardYear").innerText = `₹${data.yearTotal}`;
+}
+
+async function loadBudgetCard() {
+    const res = await fetch(`http://localhost:5000/budget/status/${user.id}`);
+    const data = await res.json();
+
+    document.getElementById("cardBudget").innerText = `₹${data.monthlyBudget}`;
+
+    const statusEl = document.getElementById("budgetStatusCard");
+    if (data.exceeded) {
+        statusEl.innerText = "Exceeded";
+        statusEl.classList.add("danger-text");
+        statusEl.classList.remove("safe-text");
+    } else {
+        statusEl.innerText = "Safe";
+        statusEl.classList.add("safe-text");
+        statusEl.classList.remove("danger-text");
+    }
+}
+
+async function loadCategoryExtremes() {
+    const res = await fetch(`http://localhost:5000/expenses/category-extremes/${user.id}`);
+    const data = await res.json();
+
+    document.getElementById("topCat").innerText = data.topCategory;
+    document.getElementById("lowCat").innerText = data.lowCategory;
+}
+
+async function loadCategoryChart() {
+    const res = await fetch(`http://localhost:5000/expenses/category-chart/${user.id}`);
+    const data = await res.json();
+
+    const labels = data.map(item => item.category);
+    const values = data.map(item => Number(item.total));
+
+    if (categoryChartInstance) categoryChartInstance.destroy();
+
+    const ctx = document.getElementById("categoryChart").getContext("2d");
+    categoryChartInstance = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+            labels,
+            datasets: [{
+                label: "Category Expense",
+                data: values
+            }]
+        }
+    });
+}
+
+async function loadMonthlyChart() {
+    const res = await fetch(`http://localhost:5000/expenses/monthly-chart/${user.id}`);
+    const data = await res.json();
+
+    const labels = data.map(item => item.month);
+    const values = data.map(item => Number(item.total));
+
+    if (monthlyChartInstance) monthlyChartInstance.destroy();
+
+    const ctx = document.getElementById("monthlyChart").getContext("2d");
+    monthlyChartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [{
+                label: "Monthly Expense",
+                data: values
+            }]
+        }
+    });
+}
+
+async function sendMonthlyNow() {
+    const res = await fetch("http://localhost:5000/reports/send-monthly-now", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user.id })
+    });
+
+    const data = await res.json();
+    alert(data.message || data.error);
+}
+
+async function addDemoData() {
+    const demoExpenses = [
+        { expense_date: "2026-03-10", amount: 250, category: "Food", payment_method: "Cash", description: "Lunch" },
+        { expense_date: "2026-03-09", amount: 500, category: "Travel", payment_method: "UPI", description: "Bus pass" },
+        { expense_date: "2026-03-08", amount: 1200, category: "Shopping", payment_method: "Card", description: "Clothes" }
+    ];
+
+    for (const exp of demoExpenses) {
+        const formData = new FormData();
+        formData.append("user_id", user.id);
+        formData.append("expense_date", exp.expense_date);
+        formData.append("amount", exp.amount);
+        formData.append("category", exp.category);
+        formData.append("payment_method", exp.payment_method);
+        formData.append("description", exp.description);
+
+        await fetch("http://localhost:5000/expenses/add", {
+            method: "POST",
+            body: formData
+        });
+    }
+
+    alert("Demo data added");
+    refreshAll();
+}
+
+function logout() {
+    localStorage.removeItem("user");
+    window.location.href = "login.html";
+}
+
+function refreshAll() {
+    loadExpenses();
+    loadRecentTransactions();
+    loadSummary();
+    loadAdvancedSummary();
+    loadBudgetCard();
+    loadCategoryExtremes();
+    loadCategoryChart();
+    loadMonthlyChart();
+}
+
+(async function () {
+    await applySavedTheme();
+    applyLanguage();
+    showCurrentDate();
+    refreshAll();
+})();
+</script>
+</body>
+</html>
